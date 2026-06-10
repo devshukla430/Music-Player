@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Music Player</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+     <div class="container">
+     <h1>🎵 My Music Player</h1>
+<div id="playlist">
+
+    <input
+        type="text"
+        id="searchBox"
+        placeholder="🔍 Search songs..."
+    >
+<h3>❤️ Favorites</h3>
+
+<div id="favoritesList">
+    No favorite songs yet
+</div>
+
+<hr>
+    <h3>Playlist</h3>
+
+    <div class="song-item" onclick="loadSong(0); playSong()">🎵 Mask Off</div>
+<div class="song-item" onclick="loadSong(1); playSong()">🎵 Starboy</div>
+<div class="song-item" onclick="loadSong(2); playSong()">🎵 Industry Baby</div>
+</div>
+<div class="player">
+<h2>Now Playing</h2>
+
+<div id="songInfo">
+    <p id="songName">Mask Off</p>
+</div>
+<img src="songs/mask off cover.jpg" alt="Album Cover" id="cover">
+
+<div id="controls">
+    <button onclick="previousSong()">⏮</button>
+    <button id="playPauseBtn" onclick="togglePlay()">▶</button>
+    <button onclick="nextSong()">⏭</button>
+    <button id="modeBtn" onclick="changeMode()">🔁</button>
+    <button id="favBtn">🤍</button>
+</div>
+<input type="range" id="progress" value="0" min="0" max="100">
+<div id="time">
+    <h4>🔊 Volume</h4>
+<input type="range" id="volume" min="0" max="100" value="100">
+    <span id="currentTime">0:00</span>
+    <span id="totalDuration">0:00</span>
+</div>
+    <audio id="music">
+        <source src="songs/mask off.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="script.js"></script>
+</div>
+</div>
+</body>
+
+</html>
