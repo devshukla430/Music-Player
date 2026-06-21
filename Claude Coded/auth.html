@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOUNDS SPHERE — Authenticate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --void:#07060b;--void-soft:#0d0b16;
+  --paper:#f5f1ea;--paper-soft:#eae3d4;
+  --ink:#15121f;--mist:#ece9fb;
+  --pulse:#7c5cff;--pulse-soft:#a78bff;--pulse-dim:#5a3fe0;
+  --ember:#ff7a45;
+  --font-display:'Unbounded',sans-serif;
+  --font-body:'Manrope',sans-serif;
+  --font-mono:'Space Mono',monospace;
+}
+[data-theme="dark"]{--bg:var(--void);--text:var(--mist);--text-dim:rgba(236,233,251,0.56);--text-faint:rgba(236,233,251,0.32);--glass:rgba(124,92,255,0.07);--glass-strong:rgba(124,92,255,0.16);--glass-border:rgba(236,233,251,0.12);--card-bg:#0d0b16;--bevel-hi:rgba(255,255,255,0.16);--bevel-lo:rgba(0,0,0,0.4)}
+[data-theme="light"]{--bg:var(--paper);--text:var(--ink);--text-dim:rgba(21,18,31,0.6);--text-faint:rgba(21,18,31,0.4);--glass:rgba(124,92,255,0.06);--glass-strong:rgba(124,92,255,0.12);--glass-border:rgba(21,18,31,0.12);--card-bg:#ffffff;--bevel-hi:rgba(255,255,255,0.7);--bevel-lo:rgba(21,18,31,0.18)}
+
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;display:flex;align-items:center;justify-content:center;transition:background 0.5s,color 0.5s;position:relative;overflow-x:hidden;padding:24px}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--pulse);outline-offset:2px}
+
+.ambient{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.ambient span{position:absolute;border-radius:50%;background:radial-gradient(circle,var(--pulse-soft),transparent 70%);opacity:0.12;filter:blur(2px);animation:float-drift linear infinite}
+@keyframes float-drift{0%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-40px) scale(1.15)}100%{transform:translate(0,0) scale(1)}}
+
+.auth-wrap{position:relative;z-index:1;width:100%;max-width:400px;background:var(--card-bg);border:1px solid var(--glass-border);border-radius:24px;padding:40px 32px;box-shadow:0 30px 70px -16px rgba(0,0,0,0.4);animation:card-in 0.5s cubic-bezier(0.16,1,0.3,1)}
+@keyframes card-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.auth-header{text-align:center;margin-bottom:28px}
+.brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);margin-bottom:16px}
+.orb-mark{width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 35% 30%, var(--pulse-soft), var(--pulse) 55%, var(--pulse-dim) 100%);box-shadow:0 0 14px rgba(124,92,255,0.5);animation:orb-breathe 3.6s ease-in-out infinite}
+@keyframes orb-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.brand-name{font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:0.5px}
+.auth-header h1{font-family:var(--font-display);font-size:20px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px}
+.auth-header p{font-size:13px;color:var(--text-dim)}
+
+.auth-tabs{display:flex;background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;padding:4px;margin-bottom:24px}
+.auth-tab{flex:1;background:none;border:none;color:var(--text-dim);font-size:13px;font-weight:700;padding:10px;border-radius:8px;transition:all 0.2s}
+.auth-tab.active{background:#fff;color:#0b0a10;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px}
+.form-input{width:100%;background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;padding:12px 16px;color:var(--text);font-size:14px;transition:border-color 0.25s,box-shadow 0.25s;box-shadow:inset 0 2px 4px var(--bevel-lo)}
+.form-input:focus{outline:none;border-color:var(--pulse-soft);box-shadow:0 0 0 3px rgba(124,92,255,0.15)}
+
+.btn-submit{width:100%;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;background:linear-gradient(150deg,var(--pulse-soft),var(--pulse) 55%,var(--pulse-dim));box-shadow:0 14px 26px -6px rgba(124,92,255,0.5), inset 0 1px 1px rgba(255,255,255,0.4);transition:transform 0.16s cubic-bezier(.34,1.56,.64,1);margin-top:8px}
+.btn-submit:hover{transform:translateY(-2px)}
+.btn-submit:active{transform:translateY(1px) scale(0.97)}
+
+.auth-divider{display:flex;align-items:center;text-align:center;margin:22px 0;font-size:11px;color:var(--text-faint);text-transform:uppercase;font-family:var(--font-mono)}
+.auth-divider::before, .auth-divider::after{content:'';flex:1;border-bottom:1px solid var(--glass-border)}
+.auth-divider::before{margin-right:12px}
+.auth-divider::after{margin-left:12px}
+
+.social-btns{display:flex;gap:12px}
+.btn-social{flex:1;background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;padding:11px;color:var(--text);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.2s,transform 0.16s}
+.btn-social:hover{background:var(--glass-strong);transform:translateY(-2px)}
+.btn-social:active{transform:translateY(1px) scale(0.96)}
+.btn-social svg{width:16px;height:16px;fill:currentColor}
+
+.auth-error{font-size:12px;color:var(--ember);margin-top:12px;display:none;text-align:center}
+.auth-error.shake{animation:shake 0.4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+.mode-banner{margin-top:24px;background:rgba(255,122,69,0.06);border:1px solid rgba(255,122,69,0.16);border-radius:12px;padding:12px;font-size:11px;color:var(--ember);line-height:1.5;text-align:left;position:relative}
+.mode-banner span{font-family:var(--font-mono);font-weight:700}
+.toggle-mode{color:var(--pulse-soft);text-decoration:underline;cursor:pointer;font-weight:700}
+
+.back-home{display:block;text-align:center;font-size:12px;color:var(--text-faint);text-decoration:none;margin-top:20px;transition:color 0.2s}
+.back-home:hover{color:var(--text-dim)}
+</style>
+</head>
+<body>
+
+<div class="ambient" id="ambient"></div>
+
+<div class="auth-wrap">
+  <div class="auth-header">
+    <a href="index.html" class="brand"><span class="orb-mark"></span><span class="brand-name">SOUNDS SPHERE</span></a>
+    <h1 id="authTitle">Welcome Back</h1>
+    <p id="authSubtitle">Log in to enter your library</p>
+  </div>
+
+  <div class="auth-tabs">
+    <button class="auth-tab active" id="tabSignIn">Sign In</button>
+    <button class="auth-tab" id="tabSignUp">Sign Up</button>
+  </div>
+
+  <form id="authForm">
+    <div class="form-group">
+      <label class="form-label" for="email">Email Address</label>
+      <input type="email" class="form-input" id="email" required placeholder="name@domain.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="password">Password</label>
+      <input type="password" class="form-input" id="password" required placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn-submit" id="btnSubmit">Sign In</button>
+  </form>
+
+  <div class="auth-error" id="authError">An error occurred. Please try again.</div>
+
+  <div class="auth-divider">Or continue with</div>
+
+  <div class="social-btns">
+    <button class="btn-social" id="btnGoogle">
+      <svg viewBox="0 0 24 24"><path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.578-7.859-8s3.53-8 7.859-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C18.155 2.502 15.46 1 12.24 1 6.033 1 12.24 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.984 0-.743-.08-1.302-.177-1.711H12.24z"/></svg>
+      Google
+    </button>
+    <button class="btn-social" id="btnFacebook">
+      <svg viewBox="0 0 24 24"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z"/></svg>
+      Facebook
+    </button>
+  </div>
+
+  <div class="mode-banner" id="modeBanner">
+    <span>TEST MODE:</span> Simulated authorization is active. You can enter any details to test immediately. <span class="toggle-mode" id="toggleMode">Connect Firebase</span>
+  </div>
+
+  <a href="index.html" class="back-home">← Back to landing page</a>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+<script>
+(function(){
+  /* ---------- AMBIENT PARTICLES ---------- */
+  var ambient = document.getElementById('ambient');
+  for(var i=0;i<8;i++){
+    var s = document.createElement('span');
+    var size = 60 + Math.random()*140;
+    s.style.width = size+'px';
+    s.style.height = size+'px';
+    s.style.left = (Math.random()*100)+'%';
+    s.style.top = (Math.random()*100)+'%';
+    s.style.animationDuration = (10+Math.random()*14)+'s';
+    s.style.animationDelay = (Math.random()*6)+'s';
+    ambient.appendChild(s);
+  }
+
+  /* ---------- CONFIGURATION ---------- */
+  // TO CONNECT YOUR REAL FIREBASE AUTHENTICATION:
+  // 1. Create a Firebase project at https://console.firebase.google.com/
+  // 2. Enable Email/Password, Google, and Facebook sign-in methods in Auth.
+  // 3. Paste your Firebase project configuration object below:
+  var firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  var isFirebaseConnected = false;
+  if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+    try {
+      firebase.initializeApp(firebaseConfig);
+      isFirebaseConnected = true;
+    } catch(e) {
+      console.error("Firebase failed to initialize:", e);
+    }
+  }
+
+  /* ---------- UI CONTROLS & STATE ---------- */
+  var isSignUpMode = false;
+  var tabSignIn = document.getElementById('tabSignIn');
+  var tabSignUp = document.getElementById('tabSignUp');
+  var authTitle = document.getElementById('authTitle');
+  var authSubtitle = document.getElementById('authSubtitle');
+  var btnSubmit = document.getElementById('btnSubmit');
+  var authForm = document.getElementById('authForm');
+  var authError = document.getElementById('authError');
+  var modeBanner = document.getElementById('modeBanner');
+  var toggleMode = document.getElementById('toggleMode');
+
+  function updateModeUI() {
+    if (isFirebaseConnected) {
+      modeBanner.innerHTML = "<span>FIREBASE CONNECTED:</span> Live authentication is active. Make sure your OAuth consent screen and Redirect URIs are configured.";
+      modeBanner.style.borderColor = "rgba(124, 92, 255, 0.25)";
+      modeBanner.style.color = "var(--text-dim)";
+    } else {
+      modeBanner.innerHTML = "<span>TEST MODE:</span> Mock authentication is active. Enter any email and password to log in. <span class=\"toggle-mode\" id=\"toggleMode\">Connect Firebase Info</span>";
+      document.getElementById('toggleMode').addEventListener('click', function() {
+        alert("To connect Firebase: Open 'auth.html' and edit the 'firebaseConfig' object at line 144 with your Firebase API Credentials.");
+      });
+    }
+  }
+  updateModeUI();
+
+  function setMode(signUp) {
+    isSignUpMode = signUp;
+    tabSignIn.classList.toggle('active', !signUp);
+    tabSignUp.classList.toggle('active', signUp);
+    authTitle.textContent = signUp ? "Create Account" : "Welcome Back";
+    authSubtitle.textContent = signUp ? "Sign up to begin your orbit" : "Log in to enter your library";
+    btnSubmit.textContent = signUp ? "Sign Up" : "Sign In";
+    authError.style.display = 'none';
+  }
+
+  tabSignIn.addEventListener('click', function(){ setMode(false); });
+  tabSignUp.addEventListener('click', function(){ setMode(true); });
+
+  function showError(msg) {
+    authError.textContent = msg;
+    authError.style.display = 'block';
+    authError.classList.remove('shake');
+    void authError.offsetWidth; // Trigger reflow
+    authError.classList.add('shake');
+  }
+
+  function handleAuthSuccess(email, provider, photoURL) {
+    var sessionObj = {
+      email: email,
+      provider: provider,
+      photoURL: photoURL || null,
+      loginTime: Date.now()
+    };
+    localStorage.setItem('soundsphere_session', JSON.stringify(sessionObj));
+    window.location.replace('player.html');
+  }
+
+  /* ---------- FORM ACTION ---------- */
+  authForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var email = document.getElementById('email').value.trim();
+    var password = document.getElementById('password').value;
+
+    if (password.length < 6) {
+      showError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (isFirebaseConnected) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = isSignUpMode ? "Registering..." : "Authenticating...";
+      
+      var action = isSignUpMode 
+        ? firebase.auth().createUserWithEmailAndPassword(email, password)
+        : firebase.auth().signInWithEmailAndPassword(email, password);
+
+      action.then(function(userCredential){
+        handleAuthSuccess(userCredential.user.email, "email");
+      }).catch(function(err){
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = isSignUpMode ? "Sign Up" : "Sign In";
+        showError(err.message);
+      });
+    } else {
+      // Mockup login
+      handleAuthSuccess(email, "email");
+    }
+  });
+
+  /* ---------- SOCIAL AUTHENTICATION ---------- */
+  function handleSocialLogin(providerName) {
+    if (isFirebaseConnected) {
+      var provider;
+      if (providerName === 'google') {
+        provider = new firebase.auth.GoogleAuthProvider();
+      } else if (providerName === 'facebook') {
+        provider = new firebase.auth.FacebookAuthProvider();
+      }
+      
+      firebase.auth().signInWithPopup(provider).then(function(result) {
+        handleAuthSuccess(result.user.email, providerName, result.user.photoURL);
+      }).catch(function(err) {
+        showError(err.message);
+      });
+    } else {
+      // Mockup login for social
+      var mockEmail = providerName === 'google' ? "google.user@soundsphere.com" : "fb.user@soundsphere.com";
+      var mockAvatar = providerName === 'google' 
+        ? "https://www.gstatic.com/images/branding/product/2x/avatar_square_blue_120dp.png" 
+        : null;
+      handleAuthSuccess(mockEmail, providerName, mockAvatar);
+    }
+  }
+
+  document.getElementById('btnGoogle').addEventListener('click', function(){ handleSocialLogin('google'); });
+  document.getElementById('btnFacebook').addEventListener('click', function(){ handleSocialLogin('facebook'); });
+
+})();
+</script>
+</body>
+</html>

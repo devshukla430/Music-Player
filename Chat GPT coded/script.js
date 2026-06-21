@@ -14,20 +14,20 @@ let playMode = "sequence";
 
 const songs = [
     {
-        name: "Mask Off",
-        file: "songs/mask off.mp3",
-        cover: "songs/mask off cover.jpg"
-    },
-    {
-        name: "Starboy",
-        file: "songs/starboy.mp3",
-        cover: "songs/starboy cover.jpg"
-    },
-    {
-        name: "Industry Baby",
-        file: "songs/Industry Baby.mp3",
-        cover: "songs/Industry Baby.jpg"
-    }
+    name: "Mask Off",
+    file: "SONGS/mask off.mp3",
+    cover: "SONGS/mask off cover.jpg"
+},
+{
+    name: "Starboy",
+    file: "SONGS/starboy.mp3",
+    cover: "SONGS/starboy cover.jpg"
+},
+{
+    name: "Industry Baby",
+    file: "SONGS/Industry Baby.mp3",
+    cover: "SONGS/Industry Baby.jpg"
+}
 ];
 
 let currentSong = 0;

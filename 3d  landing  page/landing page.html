@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoundSphere &mdash; Music Player</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --black:#050507;
+  --white:#f0eee8;
+  --accent:#c8f544;
+  --accent2:#44f5c8;
+  --mid:#0d0d14;
+  --glass:rgba(255,255,255,0.04);
+  --glass-border:rgba(255,255,255,0.08);
+}
+html,body{width:100%;height:100%;overflow-x:hidden;background:var(--black);color:var(--white);font-family:'Space Grotesk',sans-serif;cursor:none}
+canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
+
+/* CURSOR */
+.cursor{position:fixed;width:10px;height:10px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform 0.15s;mix-blend-mode:difference}
+.cursor-ring{position:fixed;width:38px;height:38px;border:1px solid rgba(200,245,68,0.35);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width 0.2s,height 0.2s,border-color 0.2s}
+.cursor.big{transform:translate(-50%,-50%) scale(2.5)}
+.cursor-ring.big{width:60px;height:60px;border-color:rgba(200,245,68,0.6)}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;width:100%;z-index:100;padding:28px 60px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;color:var(--white)}
+.nav-logo span{color:var(--accent)}
+.nav-links{display:flex;gap:40px;list-style:none}
+.nav-links a{color:rgba(240,238,232,0.5);text-decoration:none;font-size:14px;font-weight:500;letter-spacing:0.5px;transition:color 0.2s;cursor:none}
+.nav-links a:hover{color:var(--white)}
+.nav-cta{background:var(--accent);color:var(--black);padding:10px 24px;border-radius:50px;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.3px;transition:transform 0.2s,box-shadow 0.2s;cursor:none}
+.nav-cta:hover{transform:scale(1.04);box-shadow:0 0 30px rgba(200,245,68,0.4)}
+
+/* HERO */
+#hero{position:relative;z-index:10;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 40px 80px}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:var(--glass);border:1px solid var(--glass-border);padding:8px 20px;border-radius:50px;font-size:13px;color:rgba(240,238,232,0.6);letter-spacing:1px;text-transform:uppercase;margin-bottom:36px;backdrop-filter:blur(10px)}
+.hero-tag-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+h1{font-family:'Syne',sans-serif;font-size:clamp(52px,9vw,130px);font-weight:800;line-height:0.9;letter-spacing:-3px;margin-bottom:30px;color:var(--white)}
+h1 .line{display:block;overflow:hidden}
+h1 .stroke{-webkit-text-stroke:1px rgba(240,238,232,0.25);color:transparent}
+.hero-sub{font-size:18px;color:rgba(240,238,232,0.45);max-width:500px;line-height:1.7;margin-bottom:56px;font-weight:400}
+.hero-btns{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.btn-primary{background:var(--accent);color:var(--black);padding:16px 40px;border-radius:50px;font-size:16px;font-weight:700;text-decoration:none;letter-spacing:0.3px;transition:all 0.3s;display:inline-flex;align-items:center;gap:10px;cursor:none}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 20px 50px rgba(200,245,68,0.35)}
+.btn-secondary{background:var(--glass);border:1px solid var(--glass-border);color:var(--white);padding:16px 40px;border-radius:50px;font-size:16px;font-weight:500;text-decoration:none;backdrop-filter:blur(10px);transition:all 0.3s;cursor:none}
+.btn-secondary:hover{background:rgba(255,255,255,0.08);transform:translateY(-3px)}
+
+/* SCROLL INDICATOR */
+.scroll-hint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:20;pointer-events:none}
+.scroll-line{width:1px;height:60px;background:linear-gradient(to bottom,transparent,rgba(200,245,68,0.5));animation:scroll-drop 2s ease-in-out infinite}
+@keyframes scroll-drop{0%{opacity:0;transform:scaleY(0);transform-origin:top}50%{opacity:1}100%{opacity:0;transform:scaleY(1);transform-origin:top}}
+.scroll-text{font-size:11px;letter-spacing:3px;color:rgba(240,238,232,0.3);text-transform:uppercase}
+
+/* STATS */
+.stats-row{position:relative;z-index:10;display:flex;gap:0;border-top:1px solid var(--glass-border);border-bottom:1px solid var(--glass-border);background:rgba(5,5,7,0.7);backdrop-filter:blur(20px)}
+.stat{flex:1;padding:36px 40px;border-right:1px solid var(--glass-border);text-align:center}
+.stat:last-child{border-right:none}
+.stat-num{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:var(--white);letter-spacing:-2px;line-height:1}
+.stat-num span{color:var(--accent)}
+.stat-label{font-size:13px;color:rgba(240,238,232,0.4);margin-top:6px;letter-spacing:0.5px}
+
+/* FEATURES */
+#features{position:relative;z-index:10;padding:120px 60px;background:var(--black)}
+.section-tag{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;font-weight:600}
+.section-title{font-family:'Syne',sans-serif;font-size:clamp(36px,5vw,64px);font-weight:800;letter-spacing:-2px;line-height:1.05;margin-bottom:70px}
+.cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:rgba(255,255,255,0.06)}
+.card{background:var(--black);padding:48px 40px;position:relative;overflow:hidden;transition:background 0.4s}
+.card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(200,245,68,0.07) 0%,transparent 60%);opacity:0;transition:opacity 0.4s;pointer-events:none}
+.card:hover::before{opacity:1}
+.card-icon{width:52px;height:52px;background:rgba(200,245,68,0.08);border:1px solid rgba(200,245,68,0.15);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:28px;font-size:22px}
+.card-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:12px;letter-spacing:-0.5px}
+.card-desc{font-size:15px;color:rgba(240,238,232,0.45);line-height:1.7}
+.card-arrow{position:absolute;bottom:40px;right:40px;opacity:0;transform:translateX(-8px);transition:all 0.3s;font-size:20px;color:var(--accent)}
+.card:hover .card-arrow{opacity:1;transform:translateX(0)}
+
+/* SHOWCASE */
+#showcase{position:relative;z-index:10;padding:80px 60px 120px;display:flex;gap:80px;align-items:center;background:var(--mid)}
+.showcase-left{flex:1}
+.showcase-right{flex:1}
+.player-card{background:rgba(8,8,12,0.95);border:1px solid var(--glass-border);border-radius:28px;padding:40px;position:relative;overflow:hidden}
+.player-card::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(200,245,68,0.5),transparent)}
+.album-art{width:100%;aspect-ratio:1;border-radius:18px;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);margin-bottom:32px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.album-art-inner{width:80px;height:80px;background:var(--accent);border-radius:50%;opacity:0.15;animation:spin 8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.album-art-inner2{position:absolute;width:40px;height:40px;background:var(--accent2);border-radius:50%;opacity:0.2;animation:spin 5s linear infinite reverse}
+.music-bars{position:absolute;bottom:20px;left:20px;display:flex;gap:4px;align-items:flex-end;height:30px}
+.bar{width:4px;background:var(--accent);border-radius:2px;animation:bar-dance 0.8s ease-in-out infinite alternate}
+.bar:nth-child(2){animation-delay:0.1s}
+.bar:nth-child(3){animation-delay:0.2s}
+.bar:nth-child(4){animation-delay:0.3s}
+.bar:nth-child(5){animation-delay:0.15s}
+@keyframes bar-dance{from{height:4px}to{height:28px}}
+.player-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px}
+.player-artist{font-size:14px;color:rgba(240,238,232,0.4);margin-bottom:28px}
+.progress-bar{height:3px;background:rgba(255,255,255,0.1);border-radius:2px;margin-bottom:8px;position:relative}
+.progress-fill{height:100%;width:38%;background:var(--accent);border-radius:2px;position:relative}
+.progress-fill::after{content:'';position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:10px;height:10px;background:var(--white);border-radius:50%;box-shadow:0 0 0 3px rgba(200,245,68,0.3)}
+.progress-times{display:flex;justify-content:space-between;font-size:12px;color:rgba(240,238,232,0.3);margin-bottom:28px}
+.player-controls{display:flex;align-items:center;justify-content:center;gap:24px}
+.ctrl-btn{width:44px;height:44px;background:var(--glass);border:1px solid var(--glass-border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;color:rgba(240,238,232,0.6)}
+.ctrl-btn:hover{background:rgba(255,255,255,0.1);color:var(--white)}
+.ctrl-play{width:56px;height:56px;background:var(--accent);border:none;color:var(--black)}
+.ctrl-play:hover{background:var(--white);box-shadow:0 0 30px rgba(200,245,68,0.4)}
+
+/* FOOTER */
+footer{position:relative;z-index:10;padding:60px;border-top:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;background:var(--black)}
+.footer-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px}
+.footer-logo span{color:var(--accent)}
+.footer-copy{font-size:13px;color:rgba(240,238,232,0.3)}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.9s cubic-bezier(0.16,1,0.3,1),transform 0.9s cubic-bezier(0.16,1,0.3,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:0.1s}
+.reveal-delay-2{transition-delay:0.2s}
+.reveal-delay-3{transition-delay:0.3s}
+
+@media(max-width:900px){
+  nav{padding:20px 24px}
+  .nav-links{display:none}
+  #hero{padding:100px 24px 60px}
+  .stats-row{flex-wrap:wrap}
+  .stat{flex:1 1 50%;border-right:1px solid var(--glass-border)}
+  #features{padding:80px 24px}
+  .cards-grid{grid-template-columns:1fr}
+  #showcase{flex-direction:column;padding:60px 24px}
+  footer{flex-direction:column;gap:16px;text-align:center}
+  html,body{cursor:auto}
+  .cursor,.cursor-ring{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<canvas id="bg"></canvas>
+
+<nav>
+  <div class="nav-logo">Sound<span>Sphere</span></div>
+  <ul class="nav-links">
+    <li><a href="#">Features</a></li>
+    <li><a href="#">Player</a></li>
+    <li><a href="#">Library</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+  <a href="https://music-player-psi-ashen.vercel.app/" class="nav-cta">Open Player</a>
+</nav>
+
+<section id="hero">
+  <div class="hero-tag reveal">
+    <span class="hero-tag-dot"></span>
+    Music Reimagined
+  </div>
+  <h1>
+    <span class="line reveal reveal-delay-1">Your Sound.</span>
+    <span class="line reveal reveal-delay-2 stroke">Your World.</span>
+  </h1>
+  <p class="hero-sub reveal reveal-delay-3">Touch anything. Everything moves. An immersive music experience built for those who feel every beat.</p>
+  <div class="hero-btns reveal">
+    <a href="https://music-player-psi-ashen.vercel.app/" class="btn-primary">
+      Launch Player
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <a href="#features" class="btn-secondary">Explore Features</a>
+  </div>
+  <div class="scroll-hint">
+    <span class="scroll-text">Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<div class="stats-row">
+  <div class="stat reveal"><div class="stat-num">50<span>K+</span></div><div class="stat-label">Songs Available</div></div>
+  <div class="stat reveal reveal-delay-1"><div class="stat-num">3<span>D</span></div><div class="stat-label">Reactive Visuals</div></div>
+  <div class="stat reveal reveal-delay-2"><div class="stat-num">360<span>&#176;</span></div><div class="stat-label">Sound Experience</div></div>
+  <div class="stat reveal reveal-delay-3"><div class="stat-num">&#8734;</div><div class="stat-label">Playlists</div></div>
+</div>
+
+<section id="features">
+  <p class="section-tag reveal">What Makes It Special</p>
+  <h2 class="section-title reveal">Engineered for<br>the obsessed.</h2>
+  <div class="cards-grid">
+    <div class="card reveal">
+      <div class="card-icon">&#127925;</div>
+      <h3 class="card-title">Reactive 3D Visuals</h3>
+      <p class="card-desc">Every beat, every drop visualized in real-time 3D geometry that responds to the music as it plays.</p>
+      <div class="card-arrow">&#8594;</div>
+    </div>
+    <div class="card reveal reveal-delay-1">
+      <div class="card-icon">&#10084;&#65039;</div>
+      <h3 class="card-title">Smart Favorites</h3>
+      <p class="card-desc">One tap to love a track. Your favorites stay synced and ready the moment you open the player.</p>
+      <div class="card-arrow">&#8594;</div>
+    </div>
+    <div class="card reveal reveal-delay-2">
+      <div class="card-icon">&#128257;</div>
+      <h3 class="card-title">Seamless Looping</h3>
+      <p class="card-desc">Infinite replay with intelligent loop controls. Because some songs deserve to never end.</p>
+      <div class="card-arrow">&#8594;</div>
+    </div>
+    <div class="card reveal reveal-delay-3">
+      <div class="card-icon">&#9889;</div>
+      <h3 class="card-title">Zero Latency</h3>
+      <p class="card-desc">Instant playback with no buffering. Pure, uninterrupted music at the speed of thought.</p>
+      <div class="card-arrow">&#8594;</div>
+    </div>
+    <div class="card reveal reveal-delay-1">
+      <div class="card-icon">&#128241;</div>
+      <h3 class="card-title">Touch Optimized</h3>
+      <p class="card-desc">Built for every screen. Swipe, tap, and drag with precision. The interface melts away.</p>
+      <div class="card-arrow">&#8594;</div>
+    </div>
+    <div class="card reveal reveal-delay-2">
+      <div class="card-icon">&#127923;</div>
+      <h3 class="card-title">Volume Mastery</h3>
+      <p class="card-desc">Precise volume control engineered for every environment from bedroom to stage.</p>
+      <div class="card-arrow">&#8594;</div>
+    </div>
+  </div>
+</section>
+
+<section id="showcase">
+  <div class="showcase-left reveal">
+    <p class="section-tag">The Player</p>
+    <h2 class="section-title" style="margin-bottom:20px">Feel every<br>frequency.</h2>
+    <p style="color:rgba(240,238,232,0.45);font-size:16px;line-height:1.8;max-width:440px;margin-bottom:40px">From Mask Off to Starboy your playlist, your rules. Play, skip, repeat, and fall in love with music all over again.</p>
+    <a href="https://music-player-psi-ashen.vercel.app/" class="btn-primary">
+      Open Your Player
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+  <div class="showcase-right reveal reveal-delay-2">
+    <div class="player-card">
+      <div class="album-art">
+        <div class="album-art-inner"></div>
+        <div class="album-art-inner2"></div>
+        <div class="music-bars">
+          <div class="bar" style="height:8px"></div>
+          <div class="bar" style="height:16px"></div>
+          <div class="bar" style="height:12px"></div>
+          <div class="bar" style="height:20px"></div>
+          <div class="bar" style="height:10px"></div>
+        </div>
+      </div>
+      <div class="player-title">Mask Off</div>
+      <div class="player-artist">Future &middot; EVOL</div>
+      <div class="progress-bar"><div class="progress-fill"></div></div>
+      <div class="progress-times"><span>1:24</span><span>3:44</span></div>
+      <div class="player-controls">
+        <div class="ctrl-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="4" x2="5" y2="20"/></svg>
+        </div>
+        <div class="ctrl-btn ctrl-play">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+        <div class="ctrl-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="4" x2="19" y2="20"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Sound<span>Sphere</span></div>
+  <p class="footer-copy">&copy; 2026 SoundSphere. Crafted with sound &amp; soul.</p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+
+/* CURSOR */
+var cur = document.getElementById('cursor');
+var ring = document.getElementById('cursorRing');
+var mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', function(e) {
+  mx = e.clientX; my = e.clientY;
+  cur.style.left = mx + 'px';
+  cur.style.top = my + 'px';
+});
+
+function lerpCursor() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.left = rx + 'px';
+  ring.style.top = ry + 'px';
+  requestAnimationFrame(lerpCursor);
+}
+lerpCursor();
+
+document.querySelectorAll('a, button, .ctrl-btn, .card, .stat').forEach(function(el) {
+  el.addEventListener('mouseenter', function() {
+    cur.classList.add('big');
+    ring.classList.add('big');
+  });
+  el.addEventListener('mouseleave', function() {
+    cur.classList.remove('big');
+    ring.classList.remove('big');
+  });
+});
+
+/* CARD GLOW */
+document.querySelectorAll('.card').forEach(function(card) {
+  card.addEventListener('mousemove', function(e) {
+    var r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+    card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+  });
+});
+
+/* SCROLL REVEAL */
+var obs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(function(el) { obs.observe(el); });
+setTimeout(function() {
+  document.querySelectorAll('#hero .reveal, .stats-row .reveal').forEach(function(el) {
+    el.classList.add('visible');
+  });
+}, 80);
+
+/* THREE.JS */
+var canvas = document.getElementById('bg');
+var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x050507, 1);
+
+var scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x050507, 0.05);
+
+var camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 5);
+
+/* LIGHTS */
+scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+var light1 = new THREE.PointLight(0xc8f544, 5, 20);
+light1.position.set(3, 2, 3);
+scene.add(light1);
+var light2 = new THREE.PointLight(0x44f5c8, 4, 20);
+light2.position.set(-3, -2, 2);
+scene.add(light2);
+var light3 = new THREE.PointLight(0x8844ff, 3, 16);
+light3.position.set(0, 4, 0);
+scene.add(light3);
+
+/* MATERIALS */
+function mat(col, em, rough, metal) {
+  return new THREE.MeshStandardMaterial({
+    color: col,
+    emissive: em,
+    emissiveIntensity: 0.3,
+    roughness: rough !== undefined ? rough : 0.1,
+    metalness: metal !== undefined ? metal : 0.85
+  });
+}
+
+/* OBJECTS */
+var objs = [];
+
+var tkGeo = new THREE.TorusKnotGeometry(1.1, 0.3, 140, 20, 2, 3);
+var tk = new THREE.Mesh(tkGeo, mat(0x1a1a2e, 0x44f5c8, 0.05, 0.95));
+tk.position.set(3.5, 0.5, -1);
+scene.add(tk);
+objs.push({ mesh: tk, rx: 0.003, ry: 0.006, amp: 0.8, phase: 0, vx: 0, vy: 0 });
+
+var icoGeo = new THREE.IcosahedronGeometry(0.9, 1);
+var ico = new THREE.Mesh(icoGeo, mat(0x0a0a14, 0xc8f544, 0.1, 0.9));
+ico.position.set(-4, -1, -2);
+scene.add(ico);
+objs.push({ mesh: ico, rx: 0.005, ry: 0.004, amp: 1.1, phase: 1.2, vx: 0, vy: 0 });
+
+var octGeo = new THREE.OctahedronGeometry(0.7, 0);
+var oct = new THREE.Mesh(octGeo, mat(0x050514, 0x8844ff, 0.08, 0.95));
+oct.position.set(-2, 3, -3);
+scene.add(oct);
+objs.push({ mesh: oct, rx: 0.007, ry: 0.003, amp: 0.7, phase: 2.1, vx: 0, vy: 0 });
+
+var sphGeo = new THREE.SphereGeometry(0.6, 48, 48);
+var sph = new THREE.Mesh(sphGeo, mat(0x101025, 0xc8f544, 0.0, 1.0));
+sph.position.set(4, -2.5, -2);
+scene.add(sph);
+objs.push({ mesh: sph, rx: 0.002, ry: 0.008, amp: 0.9, phase: 0.7, vx: 0, vy: 0 });
+
+var torGeo = new THREE.TorusGeometry(0.7, 0.22, 20, 80);
+var tor = new THREE.Mesh(torGeo, mat(0x0d0d20, 0x44f5c8, 0.05, 0.9));
+tor.position.set(1.5, 3.5, -4);
+tor.rotation.x = Math.PI / 3;
+scene.add(tor);
+objs.push({ mesh: tor, rx: 0.004, ry: 0.005, amp: 1.0, phase: 3.5, vx: 0, vy: 0 });
+
+var dodGeo = new THREE.DodecahedronGeometry(0.55, 0);
+var dod = new THREE.Mesh(dodGeo, mat(0x080818, 0xff6644, 0.1, 0.85));
+dod.position.set(-3.5, 2, -2);
+scene.add(dod);
+objs.push({ mesh: dod, rx: 0.006, ry: 0.002, amp: 1.3, phase: 4.2, vx: 0, vy: 0 });
+
+/* WIREFRAME SPHERE */
+var wSph = new THREE.Mesh(
+  new THREE.SphereGeometry(2, 16, 16),
+  new THREE.MeshBasicMaterial({ color: 0x224422, wireframe: true, transparent: true, opacity: 0.06 })
+);
+wSph.position.set(-1, 0, -5);
+scene.add(wSph);
+objs.push({ mesh: wSph, rx: 0.001, ry: 0.002, amp: 0, phase: 0, vx: 0, vy: 0 });
+
+/* PARTICLES */
+var partCount = 800;
+var partPos = new Float32Array(partCount * 3);
+for (var i = 0; i < partCount; i++) {
+  partPos[i * 3]     = (Math.random() - 0.5) * 28;
+  partPos[i * 3 + 1] = (Math.random() - 0.5) * 28;
+  partPos[i * 3 + 2] = (Math.random() - 0.5) * 18 - 4;
+}
+var partGeo = new THREE.BufferGeometry();
+partGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
+var parts = new THREE.Points(partGeo, new THREE.PointsMaterial({
+  color: 0xc8f544, size: 0.04, transparent: true, opacity: 0.4, sizeAttenuation: true
+}));
+scene.add(parts);
+
+/* INPUT STATE */
+var mouseNX = 0, mouseNY = 0;
+var targetNX = 0, targetNY = 0;
+
+function onMove(x, y) {
+  mouseNX = (x / window.innerWidth  - 0.5) * 2;
+  mouseNY = -(y / window.innerHeight - 0.5) * 2;
+}
+document.addEventListener('mousemove', function(e) { onMove(e.clientX, e.clientY); });
+document.addEventListener('touchmove', function(e) {
+  onMove(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: true });
+document.addEventListener('touchstart', function(e) {
+  onMove(e.touches[0].clientX, e.touches[0].clientY);
+  triggerExplosion(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: true });
+document.addEventListener('click', function(e) {
+  triggerExplosion(e.clientX, e.clientY);
+});
+
+function triggerExplosion(px, py) {
+  var tx = (px / window.innerWidth  - 0.5) * 10;
+  var ty = -(py / window.innerHeight - 0.5) * 10;
+  objs.forEach(function(o) {
+    var dx = o.mesh.position.x - tx * 0.35;
+    var dy = o.mesh.position.y - ty * 0.35;
+    var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    var force = 2.0 / dist;
+    o.vx += (dx / dist) * force;
+    o.vy += (dy / dist) * force;
+  });
+}
+
+window.addEventListener('resize', function() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ANIMATE */
+var clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  var t = clock.getElapsedTime();
+
+  targetNX += (mouseNX - targetNX) * 0.05;
+  targetNY += (mouseNY - targetNY) * 0.05;
+
+  camera.position.x += (targetNX * 1.0 - camera.position.x) * 0.03;
+  camera.position.y += (targetNY * 0.7 - camera.position.y) * 0.03;
+  camera.lookAt(0, 0, 0);
+
+  objs.forEach(function(o) {
+    o.mesh.rotation.x += o.rx + targetNY * 0.004;
+    o.mesh.rotation.y += o.ry + targetNX * 0.004;
+
+    if (o.amp > 0) {
+      o.mesh.position.y += Math.sin(t * 0.55 + o.phase) * 0.0025 * o.amp;
+    }
+
+    /* velocity from click */
+    if (o.vx !== 0) { o.mesh.position.x += o.vx; o.vx *= 0.91; if (Math.abs(o.vx) < 0.001) o.vx = 0; }
+    if (o.vy !== 0) { o.mesh.position.y += o.vy; o.vy *= 0.91; if (Math.abs(o.vy) < 0.001) o.vy = 0; }
+
+    /* proximity glow */
+    var dx = o.mesh.position.x - targetNX * 3;
+    var dy = o.mesh.position.y - targetNY * 3;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    var targetScale = dist < 2.5 ? 1 + (2.5 - dist) * 0.07 : 1;
+    o.mesh.scale.x += (targetScale - o.mesh.scale.x) * 0.08;
+    o.mesh.scale.y += (targetScale - o.mesh.scale.y) * 0.08;
+    o.mesh.scale.z += (targetScale - o.mesh.scale.z) * 0.08;
+
+    if (o.mesh.material.emissiveIntensity !== undefined) {
+      var targetEI = dist < 2.5 ? 0.3 + (2.5 - dist) * 0.22 : 0.3;
+      o.mesh.material.emissiveIntensity += (targetEI - o.mesh.material.emissiveIntensity) * 0.07;
+    }
+  });
+
+  light1.position.x = Math.sin(t * 0.5) * 4 + targetNX * 1.5;
+  light1.position.y = Math.cos(t * 0.4) * 3 + targetNY * 1.5;
+  light2.position.x = Math.cos(t * 0.3) * 4 + targetNX;
+  light2.position.y = Math.sin(t * 0.5) * 3 + targetNY;
+
+  parts.rotation.y = t * 0.018 + targetNX * 0.08;
+  parts.rotation.x = targetNY * 0.04;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+})();
+</script>
+</body>
+</html>
