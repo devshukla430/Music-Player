@@ -256,12 +256,10 @@ button{font-family:inherit;cursor:pointer;background:none;border:none;color:inhe
   });
 
   /* ---------- TRACK DATA ----------
-     "Mask Off" and "Starboy" are fetched from the live deployment.
-     "Industry Baby" is served locally. */
-  var BASE = 'https://music-player-psi-ashen.vercel.app/SONGS/';
+     All tracks are served locally relative to the root directory. */
   var tracks = [
-    { id:1, title:'Mask Off', artist:'Future', src: BASE + encodeURIComponent('mask off.mp3'), cover: BASE + encodeURIComponent('mask off cover.jpg') },
-    { id:2, title:'Starboy', artist:'The Weeknd', src: BASE + encodeURIComponent('starboy.mp3'), cover: BASE + encodeURIComponent('starboy cover.jpg') },
+    { id:1, title:'Mask Off', artist:'Future', src: 'SONGS/mask_off.mp3', cover: 'SONGS/mask_off_cover.jpg' },
+    { id:2, title:'Starboy', artist:'The Weeknd', src: 'SONGS/starboy.mp3', cover: 'SONGS/starboy_cover.jpg' },
     { id:3, title:'Industry Baby', artist:'Lil Nas X', src: 'industry_baby.mp3', cover: 'industry_baby_cover.jpg' }
   ];
 
